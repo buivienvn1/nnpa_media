@@ -213,7 +213,7 @@
                     </StackPanel>
                 </Button>
 
-                <Button Name="btnThongtin" Style="{StaticResource menuButton}">
+                <Button Name="btnThongtin" Style="{StaticResource menuButton}" Click="BtnThongtin_Click">
                     <StackPanel Orientation="Horizontal">
                         <materialDesign:PackIcon Kind="InformationOutline" Style="{StaticResource menuButtonIcon}"/>
                         <TextBlock Text="Thông Tin"/>

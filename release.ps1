@@ -4,6 +4,7 @@ param(
     [string]$Version = "1.0.0",
     [switch]$SkipInstaller,
     [switch]$Upload,
+    [switch]$PublishSource,
     [string]$DeployConfigPath
 )
 
@@ -121,9 +122,35 @@ function Publish-Release {
     Write-Host "Đã upload bản phát hành theo thứ tự an toàn."
 }
 
+function Publish-Source {
+    $git = (Get-Command git.exe -ErrorAction SilentlyContinue).Source
+    if (-not $git) { throw "Không tìm thấy git.exe." }
+
+    & $git -C $root rev-parse --is-inside-work-tree | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Thư mục dự án không phải Git repository." }
+
+    & $git -C $root add --all
+    if ($LASTEXITCODE -ne 0) { throw "Không thể stage thay đổi Git." }
+
+    $stagedFiles = & $git -C $root diff --cached --name-only
+    if ($LASTEXITCODE -ne 0) { throw "Không thể kiểm tra thay đổi Git." }
+    if ($stagedFiles) {
+        & $git -C $root commit -m ("Release NNPA Media v{0}" -f $Version)
+        if ($LASTEXITCODE -ne 0) { throw "Git commit thất bại." }
+    }
+    else {
+        Write-Host "Không có thay đổi source mới để commit."
+    }
+
+    & $git -C $root push origin HEAD
+    if ($LASTEXITCODE -ne 0) { throw "Git push thất bại." }
+    Write-Host "Đã commit (nếu có thay đổi) và push source lên origin."
+}
+
 $msbuild = Find-MSBuild
 if (-not $msbuild) { throw "Không tìm thấy MSBuild của Visual Studio 2022." }
 if ($SkipInstaller -and $Upload) { throw "Không thể dùng đồng thời -SkipInstaller và -Upload." }
+if ($SkipInstaller -and $PublishSource) { throw "Không thể dùng đồng thời -SkipInstaller và -PublishSource." }
 
 $config = $null
 if (-not $SkipInstaller) { $config = Read-DeployConfig }
@@ -165,7 +192,12 @@ if (-not $SkipInstaller) {
     if ($Upload) { Publish-Release -Config $config }
 }
 
-if ($Upload) {
+if ($PublishSource) { Publish-Source }
+
+if ($Upload -and $PublishSource) {
+    Write-Host "Hoàn tất build, upload VPS, commit và push source."
+}
+elseif ($Upload) {
     Write-Host "Hoàn tất build và upload bản phát hành."
 }
 else {
