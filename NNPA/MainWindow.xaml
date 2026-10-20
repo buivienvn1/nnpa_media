@@ -1,0 +1,128 @@
+﻿<Window x:Class="NNPA.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NNPA"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        
+        FontFamily="{DynamicResource MaterialDesignFont}"
+        mc:Ignorable="d"
+        Title="NNPA" Height="450" Width="380"
+        AllowsTransparency="True" Background="Transparent"
+        WindowStyle="None" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        MouseDown="Window_MouseDown">
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="2*"/>
+                <RowDefinition Height="3*"/>
+            </Grid.RowDefinitions>
+
+
+            <Border CornerRadius="10" Grid.RowSpan="2">
+                <Border.Background>
+                    <LinearGradientBrush>
+                        <GradientStop Color="#7be9f6" Offset="0.0"/>
+                        <GradientStop Color="#f083da" Offset="1"/>
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+
+            <StackPanel VerticalAlignment="Center">
+                <Image Source="Images/logophatan.png" Width="100"
+                       Margin="0,0,0,10"/>
+                <TextBlock Text="Nhạc nước Phát An"
+                           FontWeight="Light"
+                           FontFamily="helvetica"
+                           FontSize="22"
+                           Foreground="White"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+
+
+
+            <StackPanel Grid.Row="1" >
+                <StackPanel Orientation="Horizontal">
+                    <TextBox
+                        Text="admin"
+                            x:Name="txtTaikhoan"
+                            materialDesign:HintAssist.Hint="Tài khoản"
+                            materialDesign:HintAssist.Foreground="White"
+                            materialDesign:TextFieldAssist.UnderlineBrush="White"
+                            Margin="63,0,0,0"
+                            Width="245"
+                            FontSize="16"
+                            Style="{StaticResource MaterialDesignFloatingHintTextBox}" />
+                    <materialDesign:PackIcon Kind="Account" Foreground="White"
+                                                VerticalAlignment="Center" 
+                                                HorizontalAlignment="Center"
+                                                Margin="-20,0,0,0"/>
+                </StackPanel>
+
+
+
+                <StackPanel Orientation="Horizontal" Margin="0,20,0,0">
+                    <Grid>
+                        <PasswordBox
+                        x:Name="txtMatkhau"
+                        materialDesign:HintAssist.Hint="Mật khẩu"
+                        materialDesign:HintAssist.Foreground="White"
+                        materialDesign:TextFieldAssist.UnderlineBrush="White"
+                        Margin="63,0,0,0"
+                        Width="245"
+                        FontSize="16"
+                        Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
+                        <TextBox Name="PasswordUnmask" Visibility="Hidden"
+                                 Text="admin"
+                            Margin="63,0,0,0"
+                            Width="245"
+                            FontSize="16"
+                            materialDesign:HintAssist.Hint="Mật khẩu"
+                            materialDesign:HintAssist.Foreground="White"
+                            materialDesign:TextFieldAssist.UnderlineBrush="White"
+                            Style="{StaticResource MaterialDesignFloatingHintTextBox}"/>
+                    </Grid>
+                    
+                    <materialDesign:PackIcon Kind="Lock" Foreground="White"
+                                                VerticalAlignment="Center" 
+                                                HorizontalAlignment="Center"
+                                                Margin="-20,0,0,0"/>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,25,0,0">
+                    <CheckBox
+                            x:Name="cbMatkhau"
+                            IsThreeState="False"
+                            IsChecked="False"
+                            Margin="62,0,0,0"
+                            Width="235"
+                            FontSize="13"
+                            Content="Hiện mật khẩu" 
+                            Checked="CbMatkhau_Checked"
+                            Unchecked="CbMatkhau_Checked"/>
+                </StackPanel>
+
+
+                <StackPanel Orientation="Horizontal" Margin="0,50,0,0">
+                    <Button Width="120" Height="40" Content="ĐĂNG NHẬP" Margin="40,0,60,0" x:Name="btnLogin" Click="BtnLogin_Click"/>
+                    <Button Width="120" Height="40" Content="THOÁT"  x:Name="btnThoat" Click="BtnThoat_Click"/>
+                </StackPanel>
+
+            </StackPanel>
+
+
+
+
+
+
+        </Grid>
+    </Grid>
+</Window>

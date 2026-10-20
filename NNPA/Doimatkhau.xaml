@@ -1,0 +1,52 @@
+﻿<Window x:Class="NNPA.Doimatkhau"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        TextElement.FontWeight="Regular"
+        TextElement.FontSize="13"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
+        xmlns:local="clr-namespace:NNPA"
+        mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Title="Đổi mật khẩu" Height="310" Width="300">
+    <StackPanel HorizontalAlignment="Center">
+        <PasswordBox
+            x:Name="txtMkCu"
+            materialDesign:HintAssist.Hint="Mật khẩu cũ"
+            materialDesign:HintAssist.Foreground="Black"
+            materialDesign:TextFieldAssist.UnderlineBrush="White"
+            Margin="10"
+            Width="245"
+            FontSize="16"
+            Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
+
+        <PasswordBox
+            x:Name="txtMkMoi"
+            materialDesign:HintAssist.Hint="Mật khẩu mới"
+            materialDesign:HintAssist.Foreground="Black"
+            materialDesign:TextFieldAssist.UnderlineBrush="White"
+            Margin="10"
+            Width="245"
+            FontSize="16"
+            Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
+
+        <PasswordBox
+            x:Name="txtMkMoiLap"
+            materialDesign:HintAssist.Hint="Nhập lại mật khẩu"
+            materialDesign:HintAssist.Foreground="Black"
+            materialDesign:TextFieldAssist.UnderlineBrush="White"
+            Margin="10"
+            Width="245"
+            FontSize="16"
+            Style="{StaticResource MaterialDesignFloatingHintPasswordBox}" />
+
+        <StackPanel Orientation="Horizontal" Margin="12" HorizontalAlignment="Center">
+            <Button Name="btnXacnhan" Click="BtnXacnhan_Click"  Content="Xác nhận" Margin="10" Width="100"/>
+            <Button Name="btnHuy" Click="BtnHuy_Click"  Content="Huỷ" Margin="10" Width="100"/>
+        </StackPanel>
+    </StackPanel>
+</Window>
