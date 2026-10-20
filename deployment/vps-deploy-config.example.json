@@ -1,0 +1,8 @@
+{
+    "vpsHost": "your-vps-host.example.com",
+    "vpsPort": 22,
+    "vpsUser": "deploy-user",
+    "remoteDownloadDir": "/path/to/public/updates-media",
+    "publicBaseUrl": "https://updates.example.com/updates-media",
+    "sshKeyPath": ""
+}

@@ -19,8 +19,12 @@ packages/
 
 # Test and tooling output
 TestResults/
+artifacts/
 *.coverage
 *.coveragexml
+
+# Local deployment credentials and endpoints
+deployment/vps-deploy-config.local.json
 _ReSharper*/
 *.DotSettings.user
 

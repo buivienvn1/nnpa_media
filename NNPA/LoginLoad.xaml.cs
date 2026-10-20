@@ -116,7 +116,7 @@ namespace NNPA
             CheckFileMp3();
         }
 
-        private void Window_Loaded(object sender, RoutedEventArgs e)
+        private async void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Đăng ký sự kiện PowerModeChanged
             SystemEvents.PowerModeChanged += SystemEvents_PowerModeChanged;
@@ -124,7 +124,33 @@ namespace NNPA
             // Ngăn chặn máy tính tắt màn hình và chuyển sang chế độ sleep
             SetThreadExecutionState(ES_CONTINUOUS | ES_DISPLAY_REQUIRED);
 
-            // ... (Các công việc khác)
+            await CheckForUpdatesOnStartupAsync();
+        }
+
+        private async Task CheckForUpdatesOnStartupAsync()
+        {
+            if (!Properties.Settings.Default.AutoCheckUpdate)
+                return;
+
+            try
+            {
+                using (Update.AppUpdateManager manager = new Update.AppUpdateManager())
+                {
+                    Update.UpdateCheckResult result = await manager.CheckForUpdateAsync(
+                        Update.UpdateEndpointProvider.GetManifestEndpoint(),
+                        CancellationToken.None);
+                    if (!result.IsUpdateAvailable)
+                        return;
+
+                    Thongtin dialog = new Thongtin { Owner = this };
+                    dialog.ShowAvailableUpdate(result.UpdateInfo);
+                    dialog.ShowDialog();
+                }
+            }
+            catch
+            {
+                // Kiểm tra nền không làm gián đoạn việc sử dụng phần mềm khi mất mạng.
+            }
         }
 
         private void SystemEvents_PowerModeChanged(object sender, PowerModeChangedEventArgs e)
@@ -607,7 +633,7 @@ namespace NNPA
 
         private void BtnThongtin_Click(object sender, RoutedEventArgs e)
         {
-            Thongtin thongtin = new Thongtin();
+            Thongtin thongtin = new Thongtin { Owner = this };
             thongtin.ShowDialog();
         }
 

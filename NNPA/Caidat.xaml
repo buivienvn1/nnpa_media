@@ -28,7 +28,7 @@
                 <TextBox Name="IP1" Text="192.168.1.88" Width="100"/>
                 <TextBlock Text="Port" VerticalAlignment="Center" Margin="10 0 10 0" />
                 <TextBox Name="Port1" Text="80" Width="50"/>
-                <Button Name="btnPing1" Content="Ping Check 1" Width="120" Click="BtnPing1_Click"  Margin="10 0 0 0"/>
+                <Button Name="btnPing1" Content="Ping" Width="85" Click="BtnPing1_Click"  Margin="20 0 0 0"/>
             </StackPanel>
 
             <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0 15">
@@ -40,12 +40,10 @@
             <StackPanel Grid.Row="2" Margin="0 15">
                 <TextBlock Text="Định dạng file chạy:" Margin="0 0 0 8"/>
                 <RadioButton Name="FrameSize1024" GroupName="PlaybackFrameSize"
-                             Content="Bộ điều khiển cũ - 1024 byte/mốc"
+                             Content="Bộ điều khiển cũ - 1024"
                              IsChecked="True" Margin="0 0 0 6"/>
                 <RadioButton Name="FrameSize2048" GroupName="PlaybackFrameSize"
-                             Content="Bộ điều khiển mới - 2048 byte/mốc (gửi gói 1 và gói 2)"/>
-                <TextBlock Text="File chạy được phát theo chu kỳ cố định 50 ms."
-                           Foreground="Gray" Margin="20 6 0 0"/>
+                             Content="Bộ điều khiển mới - 2048"/>
             </StackPanel>
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0 15" HorizontalAlignment="Center">

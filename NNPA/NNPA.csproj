@@ -55,6 +55,7 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -96,6 +97,8 @@
     <Compile Include="Thongtin.xaml.cs">
       <DependentUpon>Thongtin.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Update\AppUpdateManager.cs" />
+    <Compile Include="Update\UpdateEndpointProvider.cs" />
     <Page Include="Caidat.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
