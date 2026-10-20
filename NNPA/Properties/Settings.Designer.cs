@@ -61,13 +61,37 @@ namespace NNPA.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("25")]
+        [global::System.Configuration.DefaultSettingValueAttribute("50")]
         public double BuocTik {
             get {
                 return ((double)(this["BuocTik"]));
             }
             set {
                 this["BuocTik"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1024")]
+        public int PlaybackFrameSize {
+            get {
+                return ((int)(this["PlaybackFrameSize"]));
+            }
+            set {
+                this["PlaybackFrameSize"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsAudioMuted {
+            get {
+                return ((bool)(this["IsAudioMuted"]));
+            }
+            set {
+                this["IsAudioMuted"] = value;
             }
         }
     }

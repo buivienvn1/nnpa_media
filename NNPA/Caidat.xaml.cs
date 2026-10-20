@@ -18,6 +18,10 @@ namespace NNPA
             IP1.Text = Properties.Settings.Default.IPAddress;
             Port1.Text = Properties.Settings.Default.PortNumber.ToString();
             FolderPath.Text = selectedPath;
+
+            int frameSize = Properties.Settings.Default.PlaybackFrameSize;
+            FrameSize2048.IsChecked = frameSize == LoginLoad.ModernFrameSize;
+            FrameSize1024.IsChecked = frameSize != LoginLoad.ModernFrameSize;
         }
 
         private void BtnPing1_Click(object sender, RoutedEventArgs e)
@@ -82,8 +86,12 @@ namespace NNPA
 
         private void BtnSave_Click(object sender, RoutedEventArgs e)
         {
-            SvIP = Properties.Settings.Default.IPAddress = IP1.Text;
-            PortNum = Properties.Settings.Default.PortNumber = int.Parse(Port1.Text);
+            int portNumber;
+            if (!int.TryParse(Port1.Text, out portNumber) || portNumber < 1 || portNumber > 65535)
+            {
+                new MessageBoxCustom("Port phải là số từ 1 đến 65535.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                return;
+            }
 
             // Kiểm tra xem đường dẫn có tồn tại hay không
             if (!Directory.Exists(FolderPath.Text))
@@ -91,7 +99,14 @@ namespace NNPA
                 new MessageBoxCustom($"Đường dẫn chứa File Chạy không tồn tại.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
                 return;
             }
+
+            SvIP = Properties.Settings.Default.IPAddress = IP1.Text;
+            PortNum = Properties.Settings.Default.PortNumber = portNumber;
             selectedPath = Properties.Settings.Default.FolderPath = FolderPath.Text;
+            Properties.Settings.Default.PlaybackFrameSize = FrameSize2048.IsChecked == true
+                ? LoginLoad.ModernFrameSize
+                : LoginLoad.LegacyFrameSize;
+            Properties.Settings.Default.BuocTik = LoginLoad.FrameIntervalMilliseconds;
             Properties.Settings.Default.Save();
             this.Close();
         }

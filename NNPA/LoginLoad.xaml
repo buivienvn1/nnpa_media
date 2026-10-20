@@ -240,9 +240,14 @@
                 </LinearGradientBrush>
             </Border.Background>
 
-            <StackPanel>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Top"
-                            Height="auto" HorizontalAlignment="Right">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Top"
+                            HorizontalAlignment="Right">
                     <!--Top Buttons-->
                     <Button Name="btnMinimize"  Click="Window_StateChanged"
                                 ToolTip="Minimize"
@@ -257,7 +262,7 @@
                     </Button>
                 </StackPanel>
                 
-                <Grid>
+                <Grid Grid.Row="1">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="*"/>
@@ -286,20 +291,20 @@
                     </StackPanel>
 
                     <!--bảng điều khiển - danh sách bài hát-->
-                    <Grid Grid.Row="1">
+                    <Grid Grid.Row="1" Margin="40 0 30 30">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
 
-                        <StackPanel Grid.Column="1" Margin="40 0 30 30">
-                            <Grid VerticalAlignment="Center">
+                            <Grid Grid.Row="0" VerticalAlignment="Center">
                                 <TextBlock Text="Danh Sách Bài Hát" Style="{StaticResource titleText}"/>
                                 <Button Name="btnPlayList" Click="BtnPlayList_Click" ToolTip="Lựa chọn bài hát trong danh sách" HorizontalAlignment="Right" Style="{StaticResource topButton}">
                                     <materialDesign:PackIcon Kind="PlaylistMusic" Height="25" Width="25" Style="{StaticResource playerButtonIcon}"/>
                                 </Button>
                             </Grid>
 
-                            <Border CornerRadius="20" Margin="0 20 0 0" 
-                                Height="{Binding ElementName=stpControl, Path=ActualHeight,
-                                Converter={StaticResource MathConverter},
-                                ConverterParameter=((@VALUE-80))}">
+                            <Border Grid.Row="1" CornerRadius="20" Margin="0 20 0 0">
                                 <Border.Background>
                                     <LinearGradientBrush>
                                         <GradientStop Color="#3968b6" Offset="1"/>
@@ -320,18 +325,29 @@
                                     </Border>
 
                                     <!-- Control list -->
-                                    <StackPanel Margin="20" Width="Auto">
-                                        <ListBox Margin="0" SelectionChanged="LbMusic_SelectionChanged"
-                                                Name="lbMusic" ItemsSource="{Binding fileList}" HorizontalAlignment="Stretch" VerticalAlignment="Top"
-                                                Foreground="White" FontSize="20" MaxHeight="360" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                    <Grid Margin="14 20 20 20">
+                                        <ListBox Margin="0" Padding="0" SelectionChanged="LbMusic_SelectionChanged"
+                                                Name="lbMusic" ItemsSource="{Binding fileList}"
+                                                HorizontalContentAlignment="Stretch"
+                                                HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                                                Foreground="White" FontSize="20"
+                                                ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                            <ListBox.ItemContainerStyle>
+                                                <Style TargetType="ListBoxItem" BasedOn="{StaticResource MaterialDesignListBoxItem}">
+                                                    <Setter Property="Padding" Value="2 8"/>
+                                                    <Setter Property="Margin" Value="0"/>
+                                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                </Style>
+                                            </ListBox.ItemContainerStyle>
                                             <ListBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text="{Binding FileName}" TextWrapping="Wrap" MaxWidth="700" 
+                                                    <TextBlock Text="{Binding FileName}" TextWrapping="Wrap"
+                                                            HorizontalAlignment="Left"
                                                             ToolTipService.InitialShowDelay="100" ToolTip="{Binding GhiChu}"/>
                                                 </DataTemplate>
                                             </ListBox.ItemTemplate>
                                         </ListBox>
-                                    </StackPanel>
+                                    </Grid>
 
                                     <!-- Note Border -->
                                     <Border x:Name="tbNoteListMusic" Visibility="Collapsed" Opacity="0.5" CornerRadius="2"
@@ -342,13 +358,21 @@
                                 </Grid>
 
                             </Border>
-                        </StackPanel>
                     </Grid>
 
                     <!--player-->
                     <Border Grid.Row="2" Background="#41518f" CornerRadius="20 0 10 0" Margin="40 0 0 0">
-                        <StackPanel Orientation="Horizontal">
-                            <Grid Margin="30 0 0 0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="90"/>
+                                <ColumnDefinition Width="205"/>
+                                <ColumnDefinition Width="200"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*" MinWidth="80"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Grid Grid.Column="0" Margin="30 0 0 0">
                                 <Ellipse Width="60" Height="60"  RenderTransformOrigin="0.5 0.5">
                                     <Ellipse.Fill>
                                         <ImageBrush ImageSource="/Images/icon_1.png"/>
@@ -378,48 +402,52 @@
                             </Grid>
 
 
-                            <StackPanel VerticalAlignment="Center" Margin="20 0 20 0" Width="165">
-                                <TextBlock Name="txtTenBai" Text="2 Việt Nam Ơi" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Foreground="White" FontSize="20" FontWeight="Bold"/>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="20 0">
+                                <TextBlock Name="txtTenBai" Text="2 Việt Nam Ơi" TextTrimming="CharacterEllipsis"
+                                           ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}"
+                                           Foreground="White" FontSize="20" FontWeight="Bold"/>
                                 <TextBlock Text="nhacnuocphatan.com" Foreground="#9ac5e3" FontSize="16" FontWeight="SemiBold"/>
                             </StackPanel>
 
-                            <Button Name="btnPrev" Click="BtnPrev_Click" Style="{StaticResource playerButton}" ToolTip="Bài sau">
-                                <materialDesign:PackIcon Kind="SkipPrevious" Style="{StaticResource playerButtonIcon}"/>
-                            </Button>
+                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Name="btnPrev" Click="BtnPrev_Click" Style="{StaticResource playerButton}" ToolTip="Bài trước">
+                                    <materialDesign:PackIcon Kind="SkipPrevious" Style="{StaticResource playerButtonIcon}"/>
+                                </Button>
+                                <Button Name="btnStart" Click="BtnStart_Click" Style="{StaticResource playerButton}" ToolTip="Phát/Tạm dừng">
+                                    <materialDesign:PackIcon Kind="Play" Style="{StaticResource playerButtonIcon}"/>
+                                </Button>
+                                <Button Name="btnStop" Click="BtnStop_Click" Style="{StaticResource playerButton}" ToolTip="Dừng">
+                                    <materialDesign:PackIcon Kind="Stop" Style="{StaticResource playerButtonIcon}"/>
+                                </Button>
+                                <Button Name="btnNext" Click="BtnNext_Click" Style="{StaticResource playerButton}" ToolTip="Bài sau">
+                                    <materialDesign:PackIcon Kind="SkipNext" Style="{StaticResource playerButtonIcon}"/>
+                                </Button>
+                            </StackPanel>
 
-                            <Button Name="btnStart" Click="BtnStart_Click" Style="{StaticResource playerButton}" ToolTip="Play">
-                                <materialDesign:PackIcon Kind="Play" Style="{StaticResource playerButtonIcon}"/>
-                            </Button>
+                            <TextBlock Grid.Column="3" Name="tbProgressStatus" Text="00:00"
+                                       VerticalAlignment="Center" Foreground="#9ac5e3" Margin="0 0 10 0"/>
 
-                            <Button Name="btnStop" Click="BtnStop_Click" Style="{StaticResource playerButton}" ToolTip="Stop">
-                                <materialDesign:PackIcon Kind="Stop" Style="{StaticResource playerButtonIcon}"/>
-                            </Button>
+                            <Slider Grid.Column="4" x:Name="sliProgress" ValueChanged="sliProgress_ValueChanged"
+                                    IsSelectionRangeEnabled="False" VerticalAlignment="Center" Value="0"
+                                    HorizontalAlignment="Stretch" IsEnabled="False"/>
 
-                            <Button Name="btnNext" Click="BtnNext_Click" Style="{StaticResource playerButton}" ToolTip="Bài trước">
-                                <materialDesign:PackIcon Kind="SkipNext" Style="{StaticResource playerButtonIcon}"/>
-                            </Button>
-
-                            <TextBlock Name="tbProgressStatus" Text="00:00" VerticalAlignment="Center" Foreground="#9ac5e3" Margin="0 0 10 0"/>
-                            <Slider x:Name="sliProgress" ValueChanged="sliProgress_ValueChanged" IsSelectionRangeEnabled="False" VerticalAlignment="Center" Value="0"
-                                Width="350" SelectionEnd="{Binding ElementName=slider, Path=Value}" IsEnabled="False"/>
-
-                            <TextBlock Name="tbTotalSecond" Text="00:00" VerticalAlignment="Center" Foreground="#9ac5e3" Margin="10 0 5 0"/>
-
-                            <Button Name="btnRepeat" Click="BtnRepeat_Click" Style="{StaticResource playerButton}" ToolTip="Lặp lại">
-                                <materialDesign:PackIcon Kind="Repeat" Style="{StaticResource playerButtonIcon}"/>
-                            </Button>
-
-                            <Button Name="btnVolume" Click="BtnVolume_Click" Style="{StaticResource playerButton}" ToolTip="Bật Tắt Âm">
-                                <Grid>
-                                    <materialDesign:PackIcon Name="mIconVlH" Kind="VolumeHigh" Style="{StaticResource playerButtonIcon}"/>
-                                    <materialDesign:PackIcon Name="mIconVlO" Visibility="Hidden" Kind="VolumeOff" Style="{StaticResource playerButtonIcon}"/>
-                                </Grid>
-                            </Button>
-                        </StackPanel>
+                            <StackPanel Grid.Column="5" Orientation="Horizontal" VerticalAlignment="Center" Margin="10 0 5 0">
+                                <TextBlock Name="tbTotalSecond" Text="00:00" VerticalAlignment="Center" Foreground="#9ac5e3" Margin="0 0 5 0"/>
+                                <Button Name="btnRepeat" Click="BtnRepeat_Click" Style="{StaticResource playerButton}" ToolTip="Lặp lại">
+                                    <materialDesign:PackIcon Kind="Repeat" Style="{StaticResource playerButtonIcon}"/>
+                                </Button>
+                                <Button Name="btnVolume" Click="BtnVolume_Click" Style="{StaticResource playerButton}" ToolTip="Tắt âm thanh ứng dụng">
+                                    <Grid>
+                                        <materialDesign:PackIcon Name="mIconVlH" Kind="VolumeHigh" Style="{StaticResource playerButtonIcon}"/>
+                                        <materialDesign:PackIcon Name="mIconVlO" Visibility="Hidden" Kind="VolumeOff" Style="{StaticResource playerButtonIcon}"/>
+                                    </Grid>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
                     </Border>
 
                 </Grid>
-            </StackPanel>
+            </Grid>
 
             
         </Border>

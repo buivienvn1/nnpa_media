@@ -37,13 +37,18 @@ namespace NNPA
     {
         
 
+        public const int FrameIntervalMilliseconds = 50;
+        public const int PacketPayloadSize = 1024;
+        public const int LegacyFrameSize = 1024;
+        public const int ModernFrameSize = 2048;
+        public const int PacketOverheadSize = 3;
+
         DispatcherTimer timer;
         private Stopwatch stopwatch;
         BrushConverter bc= new BrushConverter();
         private string tUser;
         int repeat;
         private int totalSeconds;
-        private double buocTik = Settings.Default.BuocTik;
         private bool isPlaying;
         private bool st1;
         public static ProgressWindows pbw = null;
@@ -98,15 +103,17 @@ namespace NNPA
             Load_Playlist();
             lbMusic.ItemsSource = fileList;
 
+            mediaPlayer = new MediaPlayer
+            {
+                IsMuted = Settings.Default.IsAudioMuted
+            };
+            UpdateAudioMuteUi();
+
             if (fileList.Count <= 0) return;
-            mp3File = selectedPath + "/"+fileList[0].FileName + ".mp3";
-            mediaPlayer = new MediaPlayer();
+            mp3File = selectedPath + "/" + fileList[0].FileName + ".mp3";
             mediaPlayer.Open(new Uri(mp3File));
-            
+
             CheckFileMp3();
-
-            buocTik = Settings.Default.BuocTik;
-
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -186,17 +193,9 @@ namespace NNPA
                 }
             }
 
-            if (isPlaying)
+            if (isPlaying && st1)
             {
-                //if (!SystemSleepDetector.IsSystemAwake()) return;
-                if (_lstDatasend[0] != null && st1 == true)
-                {
-                    UdpClient client = new UdpClient();
-                    IPEndPoint ip = new IPEndPoint(IPAddress.Parse(SvIP), Convert.ToInt16(PortNum));
-
-                    client.Send((byte[])_lstDatasend[0], ((byte[])_lstDatasend[0]).Length, ip);
-                    client.Close();
-                }
+                SendCurrentPackets();
             }
         }
         private bool isConnected()
@@ -265,34 +264,56 @@ namespace NNPA
             stopwatch = new Stopwatch();
             timer = new DispatcherTimer();
             timer.Tick += new EventHandler(Timer_Tick); // Có += thì phải có -=
-            timer.Interval = TimeSpan.FromMilliseconds(buocTik); //BƯỚC 20MS
+            timer.Interval = TimeSpan.FromMilliseconds(FrameIntervalMilliseconds);
 
             stopwatch.Start();
             timer.Start();
         }
 
+        private static byte[] CreatePacket(byte[] frame, int payloadOffset, byte packetNumber)
+        {
+            byte[] packet = new byte[PacketPayloadSize + PacketOverheadSize];
+            packet[0] = (byte)'*';
+            packet[1] = packetNumber;
+            Buffer.BlockCopy(frame, payloadOffset, packet, 2, PacketPayloadSize);
+            packet[packet.Length - 1] = (byte)'#';
+            return packet;
+        }
+
         private void getData()
         {
-            int _index = (int)(sliProgress.Value * 1000 / buocTik);
-            if (_index > byteArrayList.Count - 1) return;
+            if (byteArrayList == null || byteArrayList.Count == 0)
+                return;
 
-            byte[] originalArray = byteArrayList[_index];
+            int index = (int)(sliProgress.Value * 1000 / FrameIntervalMilliseconds);
+            if (index < 0 || index >= byteArrayList.Count)
+                return;
 
-            #region startData array
-            listDataSen = new byte[1024 + 3];
-            #endregion
+            byte[] frame = byteArrayList[index];
+            if (frame == null || (frame.Length != LegacyFrameSize && frame.Length != ModernFrameSize))
+                return;
 
-            // Add element at beginning
-            Array.Copy(originalArray, 0, listDataSen, 2, 1024);
-            listDataSen[0] = arrKytu[0]; //*
-            listDataSen[1] = 1;//1
+            _lstDatasend[0] = CreatePacket(frame, 0, 1);
+            _lstDatasend[1] = frame.Length == ModernFrameSize
+                ? CreatePacket(frame, PacketPayloadSize, 2)
+                : null;
+        }
 
+        private void SendCurrentPackets()
+        {
+            if (_lstDatasend[0] == null)
+                return;
 
-            #region endData array
-            listDataSen[listDataSen.Length - 1] = arrKytu[5]; //#
-            _lstDatasend[0] = listDataSen;
-            listDataSen = null;
-            #endregion
+            using (UdpClient client = new UdpClient())
+            {
+                IPEndPoint endpoint = new IPEndPoint(IPAddress.Parse(SvIP), PortNum);
+                for (int packetIndex = 0; packetIndex < _lstDatasend.Length; packetIndex++)
+                {
+                    byte[] packet = _lstDatasend[packetIndex] as byte[];
+                    if (packet != null)
+                        client.Send(packet, packet.Length, endpoint);
+                }
+            }
         }
 
         private void Border_MouseDown(object sender, MouseButtonEventArgs e)
@@ -462,23 +483,19 @@ namespace NNPA
             //media stop
             if (totalSeconds > 0)
             {
-                //gửi data end
-                _lstDatasend[0] = new byte[1024 + 3];
-                ((byte[])_lstDatasend[0])[0] = arrKytu[0]; //*
-                ((byte[])_lstDatasend[0])[1] = 1;//1
-                ((byte[])_lstDatasend[0])[1027 - 1] = arrKytu[5]; //#
+                // Gửi frame zero đúng theo định dạng controller đang cấu hình.
+                byte[] zeroFrame = new byte[GetConfiguredFrameSize()];
+                _lstDatasend[0] = CreatePacket(zeroFrame, 0, 1);
+                _lstDatasend[1] = zeroFrame.Length == ModernFrameSize
+                    ? CreatePacket(zeroFrame, PacketPayloadSize, 2)
+                    : null;
                 if (isPlaying)
                 {
-                    //if (SystemSleepDetector.IsSystemAwake()) return;
-                    UdpClient client = new UdpClient();
-                    IPEndPoint ip = new IPEndPoint(IPAddress.Parse(SvIP), Convert.ToInt16(PortNum));
                     for (int i = 0; i < 5; i++)
                     {
-                        client.Send((byte[])_lstDatasend[0], ((byte[])_lstDatasend[0]).Length, ip);
-
+                        SendCurrentPackets();
                         Thread.Sleep(100);
                     }
-                    client.Close();
                 }
                 if (ClientSocket != null) ClientSocket.Close();
 
@@ -532,9 +549,26 @@ namespace NNPA
 
         private void BtnVolume_Click(object sender, RoutedEventArgs e)
         {
-            if (mediaPlayer.Source == null) return;
-            mediaPlayer.Volume = mediaPlayer.Volume == 0 ? 100 : 0;
-            mIconVlO.Visibility = mediaPlayer.Volume == 0 ? Visibility.Visible : Visibility.Hidden;
+            if (mediaPlayer == null)
+                return;
+
+            mediaPlayer.IsMuted = !mediaPlayer.IsMuted;
+            Settings.Default.IsAudioMuted = mediaPlayer.IsMuted;
+            Settings.Default.Save();
+            UpdateAudioMuteUi();
+        }
+
+        private void UpdateAudioMuteUi()
+        {
+            bool isMuted = mediaPlayer != null && mediaPlayer.IsMuted;
+            mIconVlH.Visibility = isMuted ? Visibility.Hidden : Visibility.Visible;
+            mIconVlO.Visibility = isMuted ? Visibility.Visible : Visibility.Hidden;
+            btnVolume.ToolTip = isMuted
+                ? "Bật âm thanh ứng dụng"
+                : "Tắt âm thanh ứng dụng (chỉ gửi dữ liệu)";
+            btnVolume.Background = isMuted
+                ? (Brush)bc.ConvertFrom("#7B5CD6")
+                : Brushes.Transparent;
         }
 
         private void sliProgress_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -592,6 +626,53 @@ namespace NNPA
             else this.WindowState = WindowState.Minimized;
         }
 
+        public static int GetConfiguredFrameSize()
+        {
+            return Settings.Default.PlaybackFrameSize == ModernFrameSize
+                ? ModernFrameSize
+                : LegacyFrameSize;
+        }
+
+        public static bool TryReadPlaybackFile(string filePath, out List<byte[]> frames, out string error)
+        {
+            frames = new List<byte[]>();
+            error = null;
+            int frameSize = GetConfiguredFrameSize();
+            FileInfo file = new FileInfo(filePath);
+
+            if (file.Length == 0 || file.Length % frameSize != 0)
+            {
+                error = string.Format(
+                    "File '{0}' có {1} byte, không chia hết cho frame {2} byte.",
+                    file.Name,
+                    file.Length,
+                    frameSize);
+                return false;
+            }
+
+            using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                while (stream.Position < stream.Length)
+                {
+                    byte[] frame = new byte[frameSize];
+                    int offset = 0;
+                    while (offset < frame.Length)
+                    {
+                        int read = stream.Read(frame, offset, frame.Length - offset);
+                        if (read == 0)
+                        {
+                            error = "File kết thúc giữa một frame dữ liệu.";
+                            frames.Clear();
+                            return false;
+                        }
+                        offset += read;
+                    }
+                    frames.Add(frame);
+                }
+            }
+            return true;
+        }
+
         void Load_Playlist()
         {
             if (selectedPath != "")
@@ -602,24 +683,17 @@ namespace NNPA
                 checkedFiles = new ObservableCollection<string>();
                 foreach (FileInfo file in files)
                 {
-                    if (file.Extension != ".txt") continue;
-                    string fileName = file.Name;
-                    checkedFiles.Add(fileName);
+                    if (!file.Extension.Equals(".txt", StringComparison.OrdinalIgnoreCase)) continue;
 
-                    List<byte[]> byteArrayList = new List<byte[]>();
-                    using (FileStream fs = new FileStream(file.FullName, FileMode.Open))
-                    {
-                        int bytesRead = 0;
-                        byte[] buffer = new byte[1024];
-                        while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
-                        {
-                            byte[] byteArray = new byte[bytesRead];
-                            Buffer.BlockCopy(buffer, 0, byteArray, 0, bytesRead);
-                            byteArrayList.Add(byteArray);
-                        }
-                    }
-                    FileData fileData = new FileData(fileName.Replace(".txt", ""), byteArrayList, buocTik);
-                    fileList.Add(fileData);
+                    List<byte[]> frames;
+                    string error;
+                    if (!TryReadPlaybackFile(file.FullName, out frames, out error))
+                        continue;
+
+                    checkedFiles.Add(file.Name);
+                    fileList.Add(new FileData(
+                        System.IO.Path.GetFileNameWithoutExtension(file.Name),
+                        frames));
                 }
             }
         }
@@ -651,10 +725,12 @@ namespace NNPA
         public int FileTotalSecond { get; set; }
         public List<byte[]> ByteArrayList { get; set; }
 
-        public FileData(string fileName, List<byte[]> byteArrayList, double buocTik)
+        public FileData(string fileName, List<byte[]> byteArrayList)
         {
             FileName = fileName;
-            FileTotalSecond = (int)((byteArrayList.Count - 1) * buocTik / 1000);
+            FileTotalSecond = (int)Math.Ceiling(
+                Math.Max(0, byteArrayList.Count - 1) *
+                LoginLoad.FrameIntervalMilliseconds / 1000.0);
             ByteArrayList = byteArrayList;
         }
 

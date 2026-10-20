@@ -42,7 +42,6 @@ namespace NNPA
             DependencyProperty.Register("dataMusics", typeof(ObservableCollection<DataMusicItems>), typeof(Playlist), new UIPropertyMetadata(null));
 
         int chontatca = 0;
-        double buocTik = Settings.Default.BuocTik;
 
 
         public Playlist()
@@ -203,19 +202,17 @@ namespace NNPA
                     {
                         if (o != fileName) continue;
 
-                        List<byte[]> byteArrayList = new List<byte[]>();
-                        using (FileStream fs = new FileStream(file.FullName, FileMode.Open))
+                        List<byte[]> frames;
+                        string error;
+                        if (!LoginLoad.TryReadPlaybackFile(file.FullName, out frames, out error))
                         {
-                            int bytesRead = 0;
-                            byte[] buffer = new byte[1024];
-                            while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
-                            {
-                                byte[] byteArray = new byte[bytesRead];
-                                Buffer.BlockCopy(buffer, 0, byteArray, 0, bytesRead);
-                                byteArrayList.Add(byteArray);
-                            }
+                            new MessageBoxCustom(error, MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                            break;
                         }
-                        FileData fileData = new FileData(fileName.Replace(".txt",""), byteArrayList, buocTik);
+
+                        FileData fileData = new FileData(
+                            System.IO.Path.GetFileNameWithoutExtension(fileName),
+                            frames);
                         fileList.Add(fileData);
                         break;
                     }

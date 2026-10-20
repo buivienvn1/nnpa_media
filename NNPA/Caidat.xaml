@@ -36,6 +36,17 @@
                 <TextBox Name="FolderPath" ToolTip="{Binding Text, RelativeSource={RelativeSource Self}}" Text="" Width="168" IsReadOnly="True"/>
                 <Button Name="btnChonpath" Content="Chọn" Width="85" Click="BtnChonpath_Click"  Margin="10 0 0 0"/>
             </StackPanel>
+
+            <StackPanel Grid.Row="2" Margin="0 15">
+                <TextBlock Text="Định dạng file chạy:" Margin="0 0 0 8"/>
+                <RadioButton Name="FrameSize1024" GroupName="PlaybackFrameSize"
+                             Content="Bộ điều khiển cũ - 1024 byte/mốc"
+                             IsChecked="True" Margin="0 0 0 6"/>
+                <RadioButton Name="FrameSize2048" GroupName="PlaybackFrameSize"
+                             Content="Bộ điều khiển mới - 2048 byte/mốc (gửi gói 1 và gói 2)"/>
+                <TextBlock Text="File chạy được phát theo chu kỳ cố định 50 ms."
+                           Foreground="Gray" Margin="20 6 0 0"/>
+            </StackPanel>
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0 15" HorizontalAlignment="Center">
             <Button Name="BtnSave" Click="BtnSave_Click"  Content="Lưu cài đặt" Width="120" Margin="10 0"/>
