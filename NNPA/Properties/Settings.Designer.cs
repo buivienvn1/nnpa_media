@@ -133,6 +133,18 @@ namespace NNPA.Properties {
 
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool GroupPauseEnabled {
+            get {
+                return ((bool)(this["GroupPauseEnabled"]));
+            }
+            set {
+                this["GroupPauseEnabled"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("4")]
         public int SongsPerGroup {
             get {

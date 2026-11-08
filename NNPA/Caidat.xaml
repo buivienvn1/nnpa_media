@@ -62,15 +62,19 @@
             </StackPanel>
 
             <StackPanel Grid.Row="4" Margin="0 15">
-                <TextBlock Text="Nghỉ theo nhóm (luôn áp dụng):" FontWeight="SemiBold" Margin="0 0 0 8"/>
+                <TextBlock Text="Nghỉ theo nhóm:" FontWeight="SemiBold" Margin="0 0 0 8"/>
+                <RadioButton Name="NoGroupPause" GroupName="GroupPauseMode"
+                             Content="Không nghỉ" Checked="GroupPauseMode_Changed" Margin="0 0 0 6"/>
                 <StackPanel Orientation="Horizontal" Margin="0 0 0 8">
-                    <TextBlock Text="Sau" VerticalAlignment="Center"/>
+                    <RadioButton Name="CustomGroupPause" GroupName="GroupPauseMode"
+                                 Content="Tùy chỉnh: sau" Checked="GroupPauseMode_Changed"
+                                 VerticalAlignment="Center"/>
                     <TextBox Name="SongsPerGroup" Width="60" Margin="8 0"/>
                     <TextBlock Text="bài, nghỉ" VerticalAlignment="Center"/>
                     <TextBox Name="GroupPauseMinutes" Width="60" Margin="8 0"/>
                     <TextBlock Text="phút" VerticalAlignment="Center"/>
                 </StackPanel>
-                <TextBlock Text="Tại mốc đủ nhóm chỉ áp dụng thời gian nghỉ nhóm, không cộng thêm thời gian nghỉ giữa bài."
+                <TextBlock Text="Khi chọn Không nghỉ, chu kỳ nhóm vẫn được reset nhưng chỉ áp dụng khoảng nghỉ giữa bài."
                            TextWrapping="Wrap" Foreground="#666666" FontSize="13"/>
             </StackPanel>
         </Grid>

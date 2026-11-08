@@ -118,9 +118,6 @@ namespace NNPA
             UpdateAudioMuteUi();
 
             if (fileList.Count <= 0) return;
-            mp3File = selectedPath + "/" + fileList[0].FileName + ".mp3";
-            mediaPlayer.Open(new Uri(mp3File));
-
             CheckFileMp3();
         }
 
@@ -186,15 +183,68 @@ namespace NNPA
 
             foreach (var file in fileList)
             {
-                if (files.Any(f => f.Name == file.FileName + ".mp3"))
-                {
+                string audioPath;
+                if (TryGetMp3Path(file.FileName, out audioPath))
                     file.GhiChu = null;
-                }
                 else
-                    file.GhiChu = ($"File '{file.FileName}.mp3' không tồn tại trong thư mục.");
+                    file.GhiChu = string.Format(
+                        "Thiếu file '{0}.mp3' - bài này sẽ được tự động bỏ qua.",
+                        file.FileName);
             }
-            //lbMusic.ItemsSource = fileList;
+        }
 
+        private bool TryGetMp3Path(string songName, out string audioPath)
+        {
+            audioPath = null;
+            if (string.IsNullOrWhiteSpace(songName) || !Directory.Exists(selectedPath))
+                return false;
+
+            string expectedName = songName + ".mp3";
+            FileInfo match = new DirectoryInfo(selectedPath)
+                .GetFiles("*.mp3")
+                .FirstOrDefault(file => string.Equals(
+                    file.Name,
+                    expectedName,
+                    StringComparison.OrdinalIgnoreCase));
+            if (match == null)
+                return false;
+
+            audioPath = match.FullName;
+            return true;
+        }
+
+        private int FindPlayableSongIndex(int startIndex, int direction, bool wrap)
+        {
+            int count = lbMusic.Items.Count;
+            if (count == 0 || direction == 0)
+                return -1;
+
+            int index = startIndex;
+            for (int checkedCount = 0; checkedCount < count; checkedCount++)
+            {
+                if (index < 0 || index >= count)
+                {
+                    if (!wrap)
+                        return -1;
+                    index = index < 0 ? count - 1 : 0;
+                }
+
+                string audioPath;
+                if (TryGetMp3Path(fileList[index].FileName, out audioPath))
+                    return index;
+                index += direction;
+            }
+            return -1;
+        }
+
+        private void ShowNoPlayableSongMessage()
+        {
+            StopPlayback(true);
+            txtPlaybackState.Text = "Không có bài nào đủ file MP3 để phát";
+            new MessageBoxCustom(
+                "Không tìm thấy file MP3 phù hợp với các file chạy trong danh sách.",
+                MessageType.Warning,
+                MessageButtons.Ok).ShowDialog();
         }
 
         private void Timer_Tick(object sender, EventArgs e)
@@ -244,7 +294,11 @@ namespace NNPA
                 automaticallyCompletedSongCount++;
                 pendingNextSongIndex = nextIndex;
                 int songsPerGroup = GetSongsPerGroup();
-                bool shouldUseGroupPause = automaticallyCompletedSongCount >= songsPerGroup;
+                bool reachedGroupBoundary = automaticallyCompletedSongCount >= songsPerGroup;
+                bool shouldUseGroupPause = reachedGroupBoundary && Settings.Default.GroupPauseEnabled;
+                if (reachedGroupBoundary && !Settings.Default.GroupPauseEnabled)
+                    automaticallyCompletedSongCount = 0;
+
                 TimeSpan pauseDuration = shouldUseGroupPause
                     ? TimeSpan.FromMinutes(GetGroupPauseMinutes())
                     : TimeSpan.FromSeconds(GetRegularPauseSeconds());
@@ -267,9 +321,10 @@ namespace NNPA
         {
             if (lbMusic.Items.Count == 0 || lbMusic.SelectedIndex < 0)
                 return -1;
-            if (lbMusic.SelectedIndex < lbMusic.Items.Count - 1)
-                return lbMusic.SelectedIndex + 1;
-            return repeat == 1 ? 0 : -1;
+            return FindPlayableSongIndex(
+                lbMusic.SelectedIndex + 1,
+                1,
+                repeat == 1);
         }
 
         private void BeginScheduledPause(TimeSpan duration, bool groupPause)
@@ -542,8 +597,29 @@ namespace NNPA
                 CancelScheduledPlayback(true);
 
             id = lbMusic.SelectedIndex;
+            string resolvedMp3Path;
+            if (!TryGetMp3Path(fileList[id].FileName, out resolvedMp3Path))
+            {
+                fileList[id].GhiChu = string.Format(
+                    "Thiếu file '{0}.mp3' - bài này sẽ được tự động bỏ qua.",
+                    fileList[id].FileName);
+                int playableIndex = FindPlayableSongIndex(id + 1, 1, true);
+                if (playableIndex < 0)
+                {
+                    ShowNoPlayableSongMessage();
+                    return;
+                }
+
+                txtPlaybackState.Text = string.Format(
+                    "Bỏ qua '{0}' do thiếu MP3",
+                    fileList[id].FileName);
+                isAutomaticSelectionChange = automaticSelection;
+                lbMusic.SelectedIndex = playableIndex;
+                return;
+            }
+
             txtTenBai.Text = fileList[id].FileName;
-            mp3File = selectedPath + "/" + txtTenBai.Text + ".mp3";
+            mp3File = resolvedMp3Path;
             mediaPlayer.Open(new Uri(mp3File));
             totalSeconds = fileList[id].FileTotalSecond;
             sliProgress.Maximum = totalSeconds + 1;
@@ -620,25 +696,15 @@ namespace NNPA
                 }
                 tbNoteListMusic.Visibility = Visibility.Visible;
             }
-            else if (fileList!=null && byteArrayList == null)
+            else if (fileList != null && fileList.Count > 0 && byteArrayList == null)
             {
-                id = 0;
-                txtTenBai.Text = fileList[id].FileName;
-                totalSeconds = fileList[id].FileTotalSecond;
-                sliProgress.Maximum = totalSeconds + 1;
-                if (totalSeconds < 3600)
+                int playableIndex = FindPlayableSongIndex(0, 1, false);
+                if (playableIndex < 0)
                 {
-                    tbTotalSecond.Text = TimeSpan.FromSeconds((int)totalSeconds).ToString(@"mm\:ss");
+                    ShowNoPlayableSongMessage();
+                    return;
                 }
-                else
-                {
-                    tbTotalSecond.Text = TimeSpan.FromSeconds((int)totalSeconds).ToString(@"hh\:mm\:ss");
-                }
-
-                byteArrayList = fileList[id].ByteArrayList;
-
-                BtnStop_Click(null, null);
-                BtnStart_Click(null, null);
+                lbMusic.SelectedIndex = playableIndex;
             }
             
 
@@ -725,9 +791,15 @@ namespace NNPA
         {
             CancelScheduledPlayback(true);
             if (lbMusic.Items.Count == 0) return;
-            int prevIndex = lbMusic.Items.Count - 1;
-            if ((lbMusic.SelectedIndex > 0) && (lbMusic.SelectedIndex < lbMusic.Items.Count))
-                prevIndex = lbMusic.SelectedIndex - 1;
+            int startIndex = lbMusic.SelectedIndex > 0
+                ? lbMusic.SelectedIndex - 1
+                : lbMusic.Items.Count - 1;
+            int prevIndex = FindPlayableSongIndex(startIndex, -1, true);
+            if (prevIndex < 0)
+            {
+                ShowNoPlayableSongMessage();
+                return;
+            }
             lbMusic.SelectedIndex = prevIndex;
         }
 
@@ -735,9 +807,15 @@ namespace NNPA
         {
             CancelScheduledPlayback(true);
             if (lbMusic.Items.Count == 0) return;
-            int nextIndex = 0;
-            if ((lbMusic.SelectedIndex >= 0) && (lbMusic.SelectedIndex < (lbMusic.Items.Count - 1)))
-                nextIndex = lbMusic.SelectedIndex + 1;
+            int startIndex = lbMusic.SelectedIndex >= 0
+                ? lbMusic.SelectedIndex + 1
+                : 0;
+            int nextIndex = FindPlayableSongIndex(startIndex, 1, true);
+            if (nextIndex < 0)
+            {
+                ShowNoPlayableSongMessage();
+                return;
+            }
             lbMusic.SelectedIndex = nextIndex;
         }
 

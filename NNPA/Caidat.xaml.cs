@@ -26,9 +26,12 @@ namespace NNPA
             CustomRegularPause.IsChecked = Properties.Settings.Default.RegularPauseEnabled;
             NoRegularPause.IsChecked = !Properties.Settings.Default.RegularPauseEnabled;
             RegularPauseSeconds.Text = Properties.Settings.Default.RegularPauseSeconds.ToString();
+            CustomGroupPause.IsChecked = Properties.Settings.Default.GroupPauseEnabled;
+            NoGroupPause.IsChecked = !Properties.Settings.Default.GroupPauseEnabled;
             SongsPerGroup.Text = Properties.Settings.Default.SongsPerGroup.ToString();
             GroupPauseMinutes.Text = Properties.Settings.Default.GroupPauseMinutes.ToString();
             UpdateRegularPauseInputState();
+            UpdateGroupPauseInputState();
         }
 
         private void RegularPauseMode_Changed(object sender, RoutedEventArgs e)
@@ -42,6 +45,21 @@ namespace NNPA
             {
                 RegularPauseSeconds.IsEnabled = CustomRegularPause.IsChecked == true;
             }
+        }
+
+        private void GroupPauseMode_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateGroupPauseInputState();
+        }
+
+        private void UpdateGroupPauseInputState()
+        {
+            if (SongsPerGroup == null || GroupPauseMinutes == null || CustomGroupPause == null)
+                return;
+
+            bool enabled = CustomGroupPause.IsChecked == true;
+            SongsPerGroup.IsEnabled = enabled;
+            GroupPauseMinutes.IsEnabled = enabled;
         }
 
         private void BtnPing1_Click(object sender, RoutedEventArgs e)
@@ -121,18 +139,21 @@ namespace NNPA
                 return;
             }
 
-            int songsPerGroup;
-            if (!int.TryParse(SongsPerGroup.Text, out songsPerGroup) || songsPerGroup < 1 || songsPerGroup > 100)
+            int songsPerGroup = Properties.Settings.Default.SongsPerGroup;
+            int groupPauseMinutes = Properties.Settings.Default.GroupPauseMinutes;
+            if (CustomGroupPause.IsChecked == true)
             {
-                new MessageBoxCustom("Số bài mỗi nhóm phải là số từ 1 đến 100.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
-                return;
-            }
+                if (!int.TryParse(SongsPerGroup.Text, out songsPerGroup) || songsPerGroup < 1 || songsPerGroup > 100)
+                {
+                    new MessageBoxCustom("Số bài mỗi nhóm phải là số từ 1 đến 100.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                    return;
+                }
 
-            int groupPauseMinutes;
-            if (!int.TryParse(GroupPauseMinutes.Text, out groupPauseMinutes) || groupPauseMinutes < 1 || groupPauseMinutes > 1440)
-            {
-                new MessageBoxCustom("Thời gian nghỉ nhóm phải là số từ 1 đến 1440 phút.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
-                return;
+                if (!int.TryParse(GroupPauseMinutes.Text, out groupPauseMinutes) || groupPauseMinutes < 1 || groupPauseMinutes > 1440)
+                {
+                    new MessageBoxCustom("Thời gian nghỉ nhóm phải là số từ 1 đến 1440 phút.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                    return;
+                }
             }
 
             // Kiểm tra xem đường dẫn có tồn tại hay không
@@ -150,6 +171,7 @@ namespace NNPA
                 : LoginLoad.LegacyFrameSize;
             Properties.Settings.Default.RegularPauseEnabled = CustomRegularPause.IsChecked == true;
             Properties.Settings.Default.RegularPauseSeconds = regularPauseSeconds;
+            Properties.Settings.Default.GroupPauseEnabled = CustomGroupPause.IsChecked == true;
             Properties.Settings.Default.SongsPerGroup = songsPerGroup;
             Properties.Settings.Default.GroupPauseMinutes = groupPauseMinutes;
             Properties.Settings.Default.BuocTik = LoginLoad.FrameIntervalMilliseconds;
