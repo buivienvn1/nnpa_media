@@ -22,6 +22,26 @@ namespace NNPA
             int frameSize = Properties.Settings.Default.PlaybackFrameSize;
             FrameSize2048.IsChecked = frameSize == LoginLoad.ModernFrameSize;
             FrameSize1024.IsChecked = frameSize != LoginLoad.ModernFrameSize;
+
+            CustomRegularPause.IsChecked = Properties.Settings.Default.RegularPauseEnabled;
+            NoRegularPause.IsChecked = !Properties.Settings.Default.RegularPauseEnabled;
+            RegularPauseSeconds.Text = Properties.Settings.Default.RegularPauseSeconds.ToString();
+            SongsPerGroup.Text = Properties.Settings.Default.SongsPerGroup.ToString();
+            GroupPauseMinutes.Text = Properties.Settings.Default.GroupPauseMinutes.ToString();
+            UpdateRegularPauseInputState();
+        }
+
+        private void RegularPauseMode_Changed(object sender, RoutedEventArgs e)
+        {
+            UpdateRegularPauseInputState();
+        }
+
+        private void UpdateRegularPauseInputState()
+        {
+            if (RegularPauseSeconds != null && CustomRegularPause != null)
+            {
+                RegularPauseSeconds.IsEnabled = CustomRegularPause.IsChecked == true;
+            }
         }
 
         private void BtnPing1_Click(object sender, RoutedEventArgs e)
@@ -93,6 +113,28 @@ namespace NNPA
                 return;
             }
 
+            int regularPauseSeconds;
+            if (!int.TryParse(RegularPauseSeconds.Text, out regularPauseSeconds) ||
+                regularPauseSeconds < 0 || regularPauseSeconds > 300)
+            {
+                new MessageBoxCustom("Thời gian nghỉ giữa bài phải là số từ 0 đến 300 giây.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                return;
+            }
+
+            int songsPerGroup;
+            if (!int.TryParse(SongsPerGroup.Text, out songsPerGroup) || songsPerGroup < 1 || songsPerGroup > 100)
+            {
+                new MessageBoxCustom("Số bài mỗi nhóm phải là số từ 1 đến 100.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                return;
+            }
+
+            int groupPauseMinutes;
+            if (!int.TryParse(GroupPauseMinutes.Text, out groupPauseMinutes) || groupPauseMinutes < 1 || groupPauseMinutes > 1440)
+            {
+                new MessageBoxCustom("Thời gian nghỉ nhóm phải là số từ 1 đến 1440 phút.", MessageType.Warning, MessageButtons.Ok).ShowDialog();
+                return;
+            }
+
             // Kiểm tra xem đường dẫn có tồn tại hay không
             if (!Directory.Exists(FolderPath.Text))
             {
@@ -106,6 +148,10 @@ namespace NNPA
             Properties.Settings.Default.PlaybackFrameSize = FrameSize2048.IsChecked == true
                 ? LoginLoad.ModernFrameSize
                 : LoginLoad.LegacyFrameSize;
+            Properties.Settings.Default.RegularPauseEnabled = CustomRegularPause.IsChecked == true;
+            Properties.Settings.Default.RegularPauseSeconds = regularPauseSeconds;
+            Properties.Settings.Default.SongsPerGroup = songsPerGroup;
+            Properties.Settings.Default.GroupPauseMinutes = groupPauseMinutes;
             Properties.Settings.Default.BuocTik = LoginLoad.FrameIntervalMilliseconds;
             Properties.Settings.Default.Save();
             this.Close();

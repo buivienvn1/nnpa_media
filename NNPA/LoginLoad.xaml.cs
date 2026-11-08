@@ -45,6 +45,14 @@ namespace NNPA
 
         DispatcherTimer timer;
         private Stopwatch stopwatch;
+        private DispatcherTimer pauseTimer;
+        private DateTime pauseEndsAt;
+        private int pendingNextSongIndex = -1;
+        private int automaticallyCompletedSongCount;
+        private bool isWaitingBetweenSongs;
+        private bool isGroupPause;
+        private bool isAutomaticSelectionChange;
+        private bool isHandlingSongCompletion;
         BrushConverter bc= new BrushConverter();
         private string tUser;
         int repeat;
@@ -206,17 +214,10 @@ namespace NNPA
 
             getData();
 
-            if (sliProgress.Value >= sliProgress.Maximum)
+            if (sliProgress.Value >= sliProgress.Maximum && !isHandlingSongCompletion)
             {
-                BtnStop_Click(null, null);
-                if (lbMusic.SelectedIndex < lbMusic.Items.Count - 1)
-                {
-                    BtnNext_Click(null, null);
-                }
-                else if (repeat==1 )
-                {
-                    BtnNext_Click(null, null);
-                }
+                HandleAutomaticSongCompletion();
+                return;
             }
 
             if (isPlaying && st1)
@@ -224,6 +225,155 @@ namespace NNPA
                 SendCurrentPackets();
             }
         }
+
+        private void HandleAutomaticSongCompletion()
+        {
+            isHandlingSongCompletion = true;
+            try
+            {
+                int nextIndex = GetAutomaticNextSongIndex();
+                StopPlayback(false);
+
+                if (nextIndex < 0)
+                {
+                    CancelScheduledPlayback(true);
+                    txtPlaybackState.Text = "Đã phát hết danh sách";
+                    return;
+                }
+
+                automaticallyCompletedSongCount++;
+                pendingNextSongIndex = nextIndex;
+                int songsPerGroup = GetSongsPerGroup();
+                bool shouldUseGroupPause = automaticallyCompletedSongCount >= songsPerGroup;
+                TimeSpan pauseDuration = shouldUseGroupPause
+                    ? TimeSpan.FromMinutes(GetGroupPauseMinutes())
+                    : TimeSpan.FromSeconds(GetRegularPauseSeconds());
+
+                if (pauseDuration <= TimeSpan.Zero)
+                {
+                    ContinueAutomaticPlayback(shouldUseGroupPause);
+                    return;
+                }
+
+                BeginScheduledPause(pauseDuration, shouldUseGroupPause);
+            }
+            finally
+            {
+                isHandlingSongCompletion = false;
+            }
+        }
+
+        private int GetAutomaticNextSongIndex()
+        {
+            if (lbMusic.Items.Count == 0 || lbMusic.SelectedIndex < 0)
+                return -1;
+            if (lbMusic.SelectedIndex < lbMusic.Items.Count - 1)
+                return lbMusic.SelectedIndex + 1;
+            return repeat == 1 ? 0 : -1;
+        }
+
+        private void BeginScheduledPause(TimeSpan duration, bool groupPause)
+        {
+            isWaitingBetweenSongs = true;
+            isGroupPause = groupPause;
+            pauseEndsAt = DateTime.Now.Add(duration);
+
+            if (pauseTimer == null)
+            {
+                pauseTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+                pauseTimer.Tick += PauseTimer_Tick;
+            }
+
+            UpdatePauseCountdown();
+            pauseTimer.Start();
+        }
+
+        private void PauseTimer_Tick(object sender, EventArgs e)
+        {
+            if (!isWaitingBetweenSongs)
+                return;
+            if (DateTime.Now >= pauseEndsAt)
+            {
+                ContinueAutomaticPlayback(isGroupPause);
+                return;
+            }
+            UpdatePauseCountdown();
+        }
+
+        private void UpdatePauseCountdown()
+        {
+            TimeSpan remaining = pauseEndsAt - DateTime.Now;
+            if (remaining < TimeSpan.Zero)
+                remaining = TimeSpan.Zero;
+            int totalRemainingSeconds = (int)Math.Ceiling(remaining.TotalSeconds);
+            string countdown = TimeSpan.FromSeconds(totalRemainingSeconds).ToString(
+                totalRemainingSeconds >= 3600 ? @"hh\:mm\:ss" : @"mm\:ss");
+            txtPlaybackState.Text = string.Format(
+                "{0}: {1} • đã phát {2}/{3} bài",
+                isGroupPause ? "Nghỉ theo nhóm" : "Nghỉ giữa bài",
+                countdown,
+                automaticallyCompletedSongCount,
+                GetSongsPerGroup());
+            tbProgressStatus.Text = countdown;
+        }
+
+        private void ContinueAutomaticPlayback(bool completedGroupPause)
+        {
+            int nextIndex = pendingNextSongIndex;
+            StopPauseTimer();
+            if (completedGroupPause)
+                automaticallyCompletedSongCount = 0;
+            pendingNextSongIndex = -1;
+
+            if (nextIndex < 0 || nextIndex >= lbMusic.Items.Count)
+            {
+                CancelScheduledPlayback(true);
+                return;
+            }
+
+            isAutomaticSelectionChange = true;
+            if (lbMusic.SelectedIndex == nextIndex)
+                lbMusic.SelectedIndex = -1;
+            lbMusic.SelectedIndex = nextIndex;
+        }
+
+        private void CancelScheduledPlayback(bool resetAutomaticSequence)
+        {
+            StopPauseTimer();
+            pendingNextSongIndex = -1;
+            isAutomaticSelectionChange = false;
+            if (resetAutomaticSequence)
+                automaticallyCompletedSongCount = 0;
+        }
+
+        private void StopPauseTimer()
+        {
+            isWaitingBetweenSongs = false;
+            isGroupPause = false;
+            if (pauseTimer != null)
+                pauseTimer.Stop();
+        }
+
+        private static int GetSongsPerGroup()
+        {
+            int value = Settings.Default.SongsPerGroup;
+            return value >= 1 && value <= 100 ? value : 4;
+        }
+
+        private static int GetGroupPauseMinutes()
+        {
+            int value = Settings.Default.GroupPauseMinutes;
+            return value >= 1 && value <= 1440 ? value : 10;
+        }
+
+        private static int GetRegularPauseSeconds()
+        {
+            if (!Settings.Default.RegularPauseEnabled)
+                return 0;
+            int value = Settings.Default.RegularPauseSeconds;
+            return value >= 0 && value <= 300 ? value : 60;
+        }
+
         private bool isConnected()
         {
             //Load IP Address and Port number
@@ -350,6 +500,7 @@ namespace NNPA
 
         private void BtnThoat_Click(object sender, RoutedEventArgs e)
         {
+            CancelScheduledPlayback(true);
             if (timer != null)
             {
                 stopwatch.Stop();
@@ -371,6 +522,7 @@ namespace NNPA
         {
             if (isPlaying) return;
 
+            CancelScheduledPlayback(true);
             Playlist playlist = new Playlist();
             playlist.ShowDialog();
             lbMusic.ItemsSource = fileList;
@@ -381,33 +533,40 @@ namespace NNPA
         #region Button Media
         private void LbMusic_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (lbMusic.SelectedItem != null)
-            {
-                id = lbMusic.SelectedIndex;
-                txtTenBai.Text = fileList[id].FileName;
-                mp3File = selectedPath + "/" + txtTenBai.Text + ".mp3";
-                mediaPlayer.Open(new Uri(mp3File));
-                totalSeconds = fileList[id].FileTotalSecond;
-                sliProgress.Maximum = totalSeconds + 1;
-                if (totalSeconds < 3600)
-                {
-                    tbTotalSecond.Text = TimeSpan.FromSeconds((int)totalSeconds).ToString(@"mm\:ss");
-                }
-                else
-                {
-                    tbTotalSecond.Text = TimeSpan.FromSeconds((int)totalSeconds).ToString(@"hh\:mm\:ss");
-                }
+            if (lbMusic.SelectedItem == null)
+                return;
 
-                byteArrayList = fileList[id].ByteArrayList;
+            bool automaticSelection = isAutomaticSelectionChange;
+            isAutomaticSelectionChange = false;
+            if (!automaticSelection)
+                CancelScheduledPlayback(true);
 
-                BtnStop_Click(null,null);
-                BtnStart_Click(null, null);
-            }
-                
+            id = lbMusic.SelectedIndex;
+            txtTenBai.Text = fileList[id].FileName;
+            mp3File = selectedPath + "/" + txtTenBai.Text + ".mp3";
+            mediaPlayer.Open(new Uri(mp3File));
+            totalSeconds = fileList[id].FileTotalSecond;
+            sliProgress.Maximum = totalSeconds + 1;
+            tbTotalSecond.Text = totalSeconds < 3600
+                ? TimeSpan.FromSeconds(totalSeconds).ToString(@"mm\:ss")
+                : TimeSpan.FromSeconds(totalSeconds).ToString(@"hh\:mm\:ss");
+            byteArrayList = fileList[id].ByteArrayList;
+
+            StopPlayback(false);
+            txtPlaybackState.Text = automaticSelection
+                ? string.Format("Tự động phát • {0}/{1} bài", automaticallyCompletedSongCount, GetSongsPerGroup())
+                : "Đã chọn bài thủ công";
+            BtnStart_Click(null, null);
         }
         
         private void BtnStart_Click(object sender, RoutedEventArgs e)
         {
+            if (isWaitingBetweenSongs)
+            {
+                CancelScheduledPlayback(true);
+                txtPlaybackState.Text = "Đã hủy thời gian nghỉ";
+            }
+
             if (totalSeconds > 0)
             {
                 //nếu không chạy - isplaying bằng false
@@ -506,6 +665,17 @@ namespace NNPA
 
         private void BtnStop_Click(object sender, RoutedEventArgs e)
         {
+            StopPlayback(true);
+        }
+
+        private void StopPlayback(bool resetAutomaticSequence)
+        {
+            if (resetAutomaticSequence)
+            {
+                CancelScheduledPlayback(true);
+                txtPlaybackState.Text = "Đã dừng";
+            }
+
             //media stop
             if (totalSeconds > 0)
             {
@@ -553,6 +723,8 @@ namespace NNPA
 
         private void BtnPrev_Click(object sender, RoutedEventArgs e)
         {
+            CancelScheduledPlayback(true);
+            if (lbMusic.Items.Count == 0) return;
             int prevIndex = lbMusic.Items.Count - 1;
             if ((lbMusic.SelectedIndex > 0) && (lbMusic.SelectedIndex < lbMusic.Items.Count))
                 prevIndex = lbMusic.SelectedIndex - 1;
@@ -561,6 +733,8 @@ namespace NNPA
 
         private void BtnNext_Click(object sender, RoutedEventArgs e)
         {
+            CancelScheduledPlayback(true);
+            if (lbMusic.Items.Count == 0) return;
             int nextIndex = 0;
             if ((lbMusic.SelectedIndex >= 0) && (lbMusic.SelectedIndex < (lbMusic.Items.Count - 1)))
                 nextIndex = lbMusic.SelectedIndex + 1;
@@ -611,6 +785,7 @@ namespace NNPA
 
         private void BtnCaidat_Click(object sender, RoutedEventArgs e)
         {
+            CancelScheduledPlayback(true);
             Caidat caidat = new Caidat();
             caidat.ShowDialog();
 
@@ -639,7 +814,7 @@ namespace NNPA
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            
+            CancelScheduledPlayback(true);
         }
         private void Close_Click(object sender, RoutedEventArgs e)
         {

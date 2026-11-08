@@ -11,13 +11,15 @@
         TextOptions.TextRenderingMode="Auto"
         xmlns:local="clr-namespace:NNPA"
         mc:Ignorable="d"
-        Title="CÀI ĐẶT" SizeToContent="WidthAndHeight" 
+        Title="CÀI ĐẶT" Width="520" SizeToContent="Height"
         WindowStartupLocation="CenterScreen"
         ResizeMode="NoResize">
     <StackPanel Margin="10">
         <Grid>
 
             <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
                 <RowDefinition/>
                 <RowDefinition/>
                 <RowDefinition/>
@@ -44,6 +46,32 @@
                              IsChecked="True" Margin="0 0 0 6"/>
                 <RadioButton Name="FrameSize2048" GroupName="PlaybackFrameSize"
                              Content="Bộ điều khiển mới - 2048"/>
+            </StackPanel>
+
+            <StackPanel Grid.Row="3" Margin="0 15">
+                <TextBlock Text="Khoảng nghỉ giữa các bài:" FontWeight="SemiBold" Margin="0 0 0 8"/>
+                <RadioButton Name="NoRegularPause" GroupName="RegularPauseMode"
+                             Content="Không nghỉ" Checked="RegularPauseMode_Changed" Margin="0 0 0 6"/>
+                <StackPanel Orientation="Horizontal">
+                    <RadioButton Name="CustomRegularPause" GroupName="RegularPauseMode"
+                                 Content="Tùy chỉnh (giây):" Checked="RegularPauseMode_Changed"
+                                 VerticalAlignment="Center"/>
+                    <TextBox Name="RegularPauseSeconds" Width="70" Margin="10 0 8 0"/>
+                    <TextBlock Text="(0–300 giây)" VerticalAlignment="Center" Foreground="#666666"/>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="4" Margin="0 15">
+                <TextBlock Text="Nghỉ theo nhóm (luôn áp dụng):" FontWeight="SemiBold" Margin="0 0 0 8"/>
+                <StackPanel Orientation="Horizontal" Margin="0 0 0 8">
+                    <TextBlock Text="Sau" VerticalAlignment="Center"/>
+                    <TextBox Name="SongsPerGroup" Width="60" Margin="8 0"/>
+                    <TextBlock Text="bài, nghỉ" VerticalAlignment="Center"/>
+                    <TextBox Name="GroupPauseMinutes" Width="60" Margin="8 0"/>
+                    <TextBlock Text="phút" VerticalAlignment="Center"/>
+                </StackPanel>
+                <TextBlock Text="Tại mốc đủ nhóm chỉ áp dụng thời gian nghỉ nhóm, không cộng thêm thời gian nghỉ giữa bài."
+                           TextWrapping="Wrap" Foreground="#666666" FontSize="13"/>
             </StackPanel>
         </Grid>
         <StackPanel Orientation="Horizontal" Margin="0 15" HorizontalAlignment="Center">

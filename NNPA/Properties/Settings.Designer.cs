@@ -106,5 +106,53 @@ namespace NNPA.Properties {
                 this["AutoCheckUpdate"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool RegularPauseEnabled {
+            get {
+                return ((bool)(this["RegularPauseEnabled"]));
+            }
+            set {
+                this["RegularPauseEnabled"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("60")]
+        public int RegularPauseSeconds {
+            get {
+                return ((int)(this["RegularPauseSeconds"]));
+            }
+            set {
+                this["RegularPauseSeconds"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4")]
+        public int SongsPerGroup {
+            get {
+                return ((int)(this["SongsPerGroup"]));
+            }
+            set {
+                this["SongsPerGroup"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int GroupPauseMinutes {
+            get {
+                return ((int)(this["GroupPauseMinutes"]));
+            }
+            set {
+                this["GroupPauseMinutes"] = value;
+            }
+        }
     }
 }
