@@ -72,7 +72,7 @@ namespace NNPA
         byte[] arrKytu = Encoding.ASCII.GetBytes("*1234#");
         public static UdpClient ClientSocket;
         int id;
-        MediaPlayer mediaPlayer;
+        private readonly MediaPlayer mediaPlayer = new MediaPlayer();
         string mp3File = "";
         DirectoryInfo di;
         FileInfo[] files;
@@ -111,10 +111,7 @@ namespace NNPA
             Load_Playlist();
             lbMusic.ItemsSource = fileList;
 
-            mediaPlayer = new MediaPlayer
-            {
-                IsMuted = Settings.Default.IsAudioMuted
-            };
+            mediaPlayer.IsMuted = Settings.Default.IsAudioMuted;
             UpdateAudioMuteUi();
 
             if (fileList.Count <= 0) return;
@@ -555,15 +552,7 @@ namespace NNPA
 
         private void BtnThoat_Click(object sender, RoutedEventArgs e)
         {
-            CancelScheduledPlayback(true);
-            if (timer != null)
-            {
-                stopwatch.Stop();
-                timer.Stop();
-                mediaPlayer = null;
-                timer.Tick -= Timer_Tick;
-            }
-            this.Close();
+            Close();
         }
 
         #region Task Data
@@ -620,6 +609,11 @@ namespace NNPA
 
             txtTenBai.Text = fileList[id].FileName;
             mp3File = resolvedMp3Path;
+            if (mediaPlayer == null)
+            {
+                ShowNoPlayableSongMessage();
+                return;
+            }
             mediaPlayer.Open(new Uri(mp3File));
             totalSeconds = fileList[id].FileTotalSecond;
             sliProgress.Maximum = totalSeconds + 1;
@@ -660,7 +654,8 @@ namespace NNPA
                             timer.Start();
                         }
                         //Media play
-                        if (mediaPlayer.Source != null) mediaPlayer.Play();
+                        if (mediaPlayer != null && mediaPlayer.Source != null)
+                            mediaPlayer.Play();
 
                         if(lbMusic.SelectedIndex<0) lbMusic.SelectedIndex = 0;
 
@@ -684,7 +679,7 @@ namespace NNPA
                         timer.Stop();
                     }
                     //btnPlay.Content = "PLAY";
-                    if (mediaPlayer.Source != null)
+                    if (mediaPlayer != null && mediaPlayer.Source != null)
                     {
                         mediaPlayer.Pause();
                     }
@@ -769,7 +764,7 @@ namespace NNPA
                     timer = null;
                 }
             }
-            if (mediaPlayer.Source != null)
+            if (mediaPlayer != null && mediaPlayer.Source != null)
             {
                 mediaPlayer.Stop();
                 tbProgressStatus.Text = mediaPlayer.Position.ToString(@"mm\:ss");
@@ -893,6 +888,19 @@ namespace NNPA
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             CancelScheduledPlayback(true);
+            if (timer != null)
+            {
+                timer.Stop();
+                timer.Tick -= Timer_Tick;
+                timer = null;
+            }
+            if (stopwatch != null)
+                stopwatch.Stop();
+            if (mediaPlayer != null)
+            {
+                mediaPlayer.Stop();
+                mediaPlayer.Close();
+            }
         }
         private void Close_Click(object sender, RoutedEventArgs e)
         {
